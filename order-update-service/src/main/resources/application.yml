@@ -1,12 +1,14 @@
-
 spring:
-  profiles:
-    active: test
+  application:
+    name: order-update-service
 
-position-service:
-  base-url: http://localhost:8081
+server:
+  port: 8082
 
 order:
   input-file: ../data/order_updates.csv
   publisher:
     max-events-per-second: 50
+
+position-service:
+  base-url: http://localhost:8081
