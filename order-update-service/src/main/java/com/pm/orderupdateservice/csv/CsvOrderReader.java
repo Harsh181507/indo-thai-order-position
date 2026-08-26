@@ -26,17 +26,27 @@ public class CsvOrderReader {
                 eventConsumer.accept(toOrderEvent(record));
             }
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to read CSV input", exception);
+            throw new IllegalStateException("Failed to read order CSV", exception);
         }
     }
 
     private OrderEvent toOrderEvent(CSVRecord record) {
         return new OrderEvent(
-                record.get("event_id"),
-                record.get("symbol"),
-                parseTransactionType(record.get("transaction_type")),
-                parseQuantity(record.get("quantity"))
+                getValue(record, "event_id"),
+                getValue(record, "symbol"),
+                parseTransactionType(getValue(record, "transaction_type")),
+                parseQuantity(getValue(record, "quantity"))
         );
+    }
+
+    private String getValue(CSVRecord record, String column) {
+        if (!record.isMapped(column)) {
+            throw new IllegalStateException(
+                    "Missing required CSV column: " + column
+            );
+        }
+
+        return record.get(column);
     }
 
     private TransactionType parseTransactionType(String value) {
@@ -45,7 +55,7 @@ public class CsvOrderReader {
         }
 
         try {
-            return TransactionType.valueOf(value);
+            return TransactionType.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException exception) {
             return null;
         }

@@ -2,9 +2,9 @@ package com.pm.orderupdateservice.client;
 
 import com.pm.orderupdateservice.model.OrderEvent;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class PositionServiceClient {
@@ -21,16 +21,17 @@ public class PositionServiceClient {
     }
 
     public void send(OrderEvent event) {
-        ResponseEntity<Void> response = restClient
-                .post()
-                .uri("/events")
-                .body(event)
-                .retrieve()
-                .toBodilessEntity();
-
-        if (!response.getStatusCode().is2xxSuccessful()) {
+        try {
+            restClient
+                    .post()
+                    .uri("/events")
+                    .body(event)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException exception) {
             throw new IllegalStateException(
-                    "Position service returned status: " + response.getStatusCode()
+                    "Failed to send event to position service: " + event.eventId(),
+                    exception
             );
         }
     }

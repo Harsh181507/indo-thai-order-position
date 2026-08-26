@@ -16,11 +16,13 @@ class OrderProcessingServiceTest {
     private final OrderEventValidator validator = new OrderEventValidator();
     private final PositionServiceClient positionServiceClient = mock(PositionServiceClient.class);
     private final EventThrottle eventThrottle = mock(EventThrottle.class);
+    private final ProcessingStatistics statistics = new ProcessingStatistics();
 
     private final OrderProcessingService service = new OrderProcessingService(
             validator,
             positionServiceClient,
-            eventThrottle
+            eventThrottle,
+            statistics
     );
 
     @Test

@@ -11,9 +11,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 class OrderProcessingConcurrencyTest {
 
@@ -22,11 +23,13 @@ class OrderProcessingConcurrencyTest {
         OrderEventValidator validator = new OrderEventValidator();
         PositionServiceClient positionServiceClient = mock(PositionServiceClient.class);
         EventThrottle eventThrottle = mock(EventThrottle.class);
+        ProcessingStatistics statistics = new ProcessingStatistics();
 
         OrderProcessingService service = new OrderProcessingService(
                 validator,
                 positionServiceClient,
-                eventThrottle
+                eventThrottle,
+                statistics
         );
 
         int eventCount = 100;
@@ -52,10 +55,7 @@ class OrderProcessingConcurrencyTest {
             }
         }
 
-        verify(positionServiceClient, times(eventCount)).send(
-                org.mockito.ArgumentMatchers.any(OrderEvent.class)
-        );
-
+        verify(positionServiceClient, times(eventCount)).send(any(OrderEvent.class));
         verify(eventThrottle, times(eventCount)).acquire();
     }
 
@@ -64,11 +64,13 @@ class OrderProcessingConcurrencyTest {
         OrderEventValidator validator = new OrderEventValidator();
         PositionServiceClient positionServiceClient = mock(PositionServiceClient.class);
         EventThrottle eventThrottle = mock(EventThrottle.class);
+        ProcessingStatistics statistics = new ProcessingStatistics();
 
         OrderProcessingService service = new OrderProcessingService(
                 validator,
                 positionServiceClient,
-                eventThrottle
+                eventThrottle,
+                statistics
         );
 
         OrderEvent event = new OrderEvent(

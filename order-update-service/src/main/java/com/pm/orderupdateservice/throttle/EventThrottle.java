@@ -1,5 +1,7 @@
 package com.pm.orderupdateservice.throttle;
 
+import java.util.concurrent.locks.LockSupport;
+
 public class EventThrottle {
 
     private final long intervalNanos;
@@ -15,25 +17,20 @@ public class EventThrottle {
     }
 
     public synchronized void acquire() {
-        long currentTime = System.nanoTime();
+        while (true) {
+            long currentTime = System.nanoTime();
 
-        if (currentTime < nextAvailableTime) {
+            if (currentTime >= nextAvailableTime) {
+                nextAvailableTime = currentTime + intervalNanos;
+                return;
+            }
+
             long waitNanos = nextAvailableTime - currentTime;
+            LockSupport.parkNanos(waitNanos);
 
-            try {
-                long millis = waitNanos / 1_000_000L;
-                int nanos = (int) (waitNanos % 1_000_000L);
-
-                Thread.sleep(millis, nanos);
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("Event throttle interrupted", exception);
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IllegalStateException("Event throttle interrupted");
             }
         }
-
-        nextAvailableTime = Math.max(
-                nextAvailableTime + intervalNanos,
-                System.nanoTime()
-        );
     }
 }
