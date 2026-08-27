@@ -19,11 +19,18 @@ import static org.mockito.Mockito.verify;
 
 class OrderFileProcessorTest {
 
-    private final CsvOrderReader csvOrderReader = mock(CsvOrderReader.class);
-    private final OrderProcessingService orderProcessingService = mock(OrderProcessingService.class);
+    private final CsvOrderReader csvOrderReader =
+            mock(CsvOrderReader.class);
+
+    private final OrderProcessingService orderProcessingService =
+            mock(OrderProcessingService.class);
+
+    private final ProcessingStatistics statistics =
+            mock(ProcessingStatistics.class);
 
     @Test
     void shouldProcessAllEventsFromFile() throws Exception {
+
         Path tempFile = Files.createTempFile("orders-", ".csv");
 
         try {
@@ -42,30 +49,42 @@ class OrderFileProcessorTest {
                     )
             );
 
-            OrderServiceProperties properties = new OrderServiceProperties(
-                    tempFile.toString(),
-                    new OrderServiceProperties.Publisher(50)
-            );
+            OrderServiceProperties properties =
+                    new OrderServiceProperties(
+                            tempFile.toString(),
+                            new OrderServiceProperties.Publisher(50)
+                    );
 
             doAnswer(invocation -> {
-                Consumer<OrderEvent> consumer = invocation.getArgument(1);
+
+                Consumer<OrderEvent> consumer =
+                        invocation.getArgument(1);
+
                 events.forEach(consumer);
+
                 return null;
+
             }).when(csvOrderReader).read(
                     any(Reader.class),
                     any(Consumer.class)
             );
 
-            OrderFileProcessor processor = new OrderFileProcessor(
-                    csvOrderReader,
-                    orderProcessingService,
-                    properties
-            );
+            OrderFileProcessor processor =
+                    new OrderFileProcessor(
+                            csvOrderReader,
+                            orderProcessingService,
+                            properties,
+                            statistics
+                    );
 
             processor.process();
 
-            verify(orderProcessingService).process(events.get(0));
-            verify(orderProcessingService).process(events.get(1));
+            verify(orderProcessingService)
+                    .process(events.get(0));
+
+            verify(orderProcessingService)
+                    .process(events.get(1));
+
         } finally {
             Files.deleteIfExists(tempFile);
         }
